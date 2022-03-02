@@ -1,4 +1,4 @@
-import { OrthographicCamera, Scene, Vector2, Renderer, AudioListener, Object3D, Camera, PerspectiveCamera, Vector3, WebGLRenderer, Matrix4, Matrix } from "three";
+import { OrthographicCamera, Scene, Vector2, Renderer, AudioListener, Object3D, Camera, PerspectiveCamera, Vector3, WebGLRenderer, Matrix4, Matrix, StaticReadUsage } from "three";
 import { Timers } from "../utils/Timers";
 import { DisplayObject, traverseUpdate, traverseHitTest } from "./DisplayObject";
 import { EventPool, lastInput } from "../event/Event";
@@ -22,7 +22,9 @@ export class Stage {
     public static init(renderer: Renderer, parameters?: StageInitParameters) {
         init(renderer, parameters);
     }
-
+    public static resize(w, h) {
+        resizeStage(w, h);
+    }
     public static set scene(value: Scene) {
         _scene = value;
     }
@@ -299,9 +301,10 @@ function updateCanvasMatrix() {
     _canvasTransform.multiply(new Matrix4().makeTranslation(-offsetX, -offsetY, 0));
 }
 
-function onWindowResize(evt?: UIEvent) {
-    _width = _canvas.clientWidth;
-    _height = _canvas.clientHeight;
+function resizeStage(w, h) {
+    if (w === _width && h === _height) return;
+    _width = w;
+    _height = h;
     updateCanvasMatrix();
 
     let aspectRatio = _width / _height;
@@ -324,9 +327,13 @@ function onWindowResize(evt?: UIEvent) {
         _camera.aspect = aspectRatio;
         _camera.updateProjectionMatrix();
     }
-
-    if (evt)
+    if (Stage.scene)
         Stage.eventDispatcher.dispatchEvent("size_changed");
+}
+function onWindowResize(evt?: UIEvent) {
+    resizeStage(_canvas.clientWidth, _canvas.clientHeight);
+    // if (evt)
+    //     Stage.eventDispatcher.dispatchEvent("size_changed");
 }
 
 function is_touch_enabled() {
